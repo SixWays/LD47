@@ -58,7 +58,7 @@ public class Player : Car {
         }
     }
     void OnCollisionEnter(Collision c){
-        if (_state != PlayerState.Dying && !c.collider.CompareTag("Floor")){
+        if (_state != PlayerState.Dying && _state != PlayerState.Transferring && !c.collider.CompareTag("Floor")){
             Debug.LogFormat(c.collider, "DIE: {0}", c.collider.name);
             var rb = GetComponent<Rigidbody>();
             rb.constraints = RigidbodyConstraints.None;
