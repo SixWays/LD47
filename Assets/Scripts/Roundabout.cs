@@ -5,9 +5,19 @@ using UnityEngine;
 public class Roundabout : MonoBehaviour {
     [SerializeField] float _radiusInner;
     [SerializeField] float _radiusOuter;
+    [SerializeField] BoxCollider[] _boundaries;
 
     public float RadiusInner => _radiusInner;
     public float RadiusOuter => _radiusOuter;
+
+    public void DeactivateBoundary(params int[] indices){
+        foreach (var b in _boundaries){
+            b.enabled = true;
+        }
+        foreach (var i in indices){
+            _boundaries[i].enabled = false;
+        }
+    }
 
     void OnDrawGizmos(){
         var gc = Gizmos.color;
