@@ -7,8 +7,8 @@ public class Ai : MonoBehaviour {
     [SerializeField, Range(0f,1f)] float _exitChance;
     [SerializeField] float _entryOffsetRadians = 0.1f;
 
-    Road _currentRoad;
-    Roundabout _currentRoundabout;
+    public Road _currentRoad;
+    public Roundabout _currentRoundabout;
     float _theta;
 
     Coroutine _transfer;
@@ -24,24 +24,22 @@ public class Ai : MonoBehaviour {
                 // theta = l/r
                 float dTheta = distance / _currentRoundabout.RadiusOuter;
                 _theta += dTheta;
-                if (_theta > Mathf.PI*2){
-                    _theta -= Mathf.PI*2;
-                }
-                transform.position = _currentRoundabout.transform.position + FromPolar(_theta, _currentRoundabout.RadiusOuter);
-                transform.forward = PolarForward(_currentRoundabout.RadiusOuter);
+                _theta = Mathf.Repeat(_theta, Mathf.PI*2);
+                transform.position = FromPolar(_theta, _currentRoundabout.RadiusOuter, _currentRoundabout.transform.position);
+                transform.forward = PolarForward(_theta, _currentRoundabout.RadiusOuter);
             }
         }
     }
-    Vector3 FromPolar(float theta, float radius){
-        return radius * new Vector3 (Mathf.Cos(theta), 0, Mathf.Cos(theta));
+    Vector3 FromPolar(float theta, float radius, Vector3 centre){
+        return centre + (radius * new Vector3 (Mathf.Cos(theta), 0, Mathf.Sin(theta)));
     }
     float ToPolar(Vector3 position, Vector3 centre){
         Vector3 r = position-centre;
         float radius = r.magnitude;
         return Mathf.Atan2(r.z, r.x);
     }
-    Vector3 PolarForward(float radius){
-        return FromPolar(_theta + 0.01f, radius) - FromPolar(_theta, radius);
+    Vector3 PolarForward(float theta, float radius){
+        return FromPolar(theta + 0.01f, radius, Vector3.zero) - FromPolar(theta, radius, Vector3.zero);
     }
     Vector3 _nearestEntry {
         get {
@@ -61,7 +59,7 @@ public class Ai : MonoBehaviour {
                 _currentRoad = r;
                 _currentRoundabout = null;
                 if (Random.Range(0f,1f) < _exitChance){
-                    _transfer = StartCoroutine(_Transfer(_nearestEntry));
+                    _transfer = StartCoroutine(_Transfer(_nearestEntry, _currentRoad.GetForward(_nearestEntry)));
                 }
             }
         } else if (_currentRoad) {
@@ -69,8 +67,9 @@ public class Ai : MonoBehaviour {
             if (r){
                 _currentRoundabout = r;
                 _theta = ToPolar(transform.position, _currentRoundabout.transform.position);
-                Vector3 target = FromPolar(_theta + _entryOffsetRadians, _currentRoundabout.RadiusOuter);
-                _transfer = StartCoroutine(_Transfer(target, ()=>{_currentRoad=null;}));
+                Vector3 target = FromPolar(_theta + _entryOffsetRadians, _currentRoundabout.RadiusOuter, _currentRoundabout.transform.position);
+                Vector3 fwd = PolarForward(_theta + _entryOffsetRadians, _currentRoundabout.RadiusOuter);
+                _transfer = StartCoroutine(_Transfer(target, fwd, ()=>{_currentRoad=null;}));
             }
         } else {
             // Just spawned
@@ -81,20 +80,22 @@ public class Ai : MonoBehaviour {
                 transform.forward = _currentRoad.GetForward(transform.position);
             } else if (_currentRoundabout){
                 _theta = ToPolar(transform.position, _currentRoundabout.transform.position);
-                transform.position = FromPolar(_theta, _currentRoundabout.RadiusOuter);
-                transform.forward = PolarForward(_currentRoundabout.RadiusOuter);
+                transform.position = FromPolar(_theta, _currentRoundabout.RadiusOuter, _currentRoundabout.transform.position);
+                transform.forward = PolarForward(_theta, _currentRoundabout.RadiusOuter);
             }
         }
 
-        IEnumerator _Transfer(Vector3 endPoint, System.Action onTransferred=null){
+        IEnumerator _Transfer(Vector3 endPoint, Vector3 endFwd, System.Action onTransferred=null){
             Vector3 startPoint = transform.position;
             float time = Vector3.Distance(startPoint, endPoint) / Speed;
             float t = 0;
             while (t < time){
                 transform.position = Vector3.Lerp(startPoint, endPoint, t/time);
+                t += Time.deltaTime;
                 yield return null;
             }
             transform.position = endPoint;
+            transform.forward = endFwd;
             onTransferred?.Invoke();
             _transfer = null;
         }

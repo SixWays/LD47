@@ -23,8 +23,8 @@ public class Road : MonoBehaviour {
         float dEntry1 = Vector3.Distance(position, Entry1);
         float dEntry2 = Vector3.Distance(position, Entry2);
 
-        float max = Mathf.Max(dEntry1, dEntry2);
-        return (Mathf.Approximately(max, dEntry1)) ? _Fwd(Exit1) : _Fwd(Exit2);
+        float min = Mathf.Min(dEntry1, dEntry2);
+        return (Mathf.Approximately(min, dEntry1)) ? _Fwd(Exit1) : _Fwd(Exit2);
 
         Vector3 _Fwd(Vector3 target){
             return (target - position).normalized;
