@@ -1,8 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
 
 public class Roundabout : MonoBehaviour {
+    static List<Roundabout> _all = new List<Roundabout>();
+    public static ReadOnlyCollection<Roundabout> All => _all.AsReadOnly();
+    public static Roundabout Active {get; private set;}
+
     [SerializeField] float _radiusInner;
     [SerializeField] float _radiusOuter;
     [SerializeField] BoxCollider[] _boundaries;
@@ -10,12 +15,56 @@ public class Roundabout : MonoBehaviour {
     public float RadiusInner => _radiusInner;
     public float RadiusOuter => _radiusOuter;
 
-    public void DeactivateBoundary(params int[] indices){
-        foreach (var b in _boundaries){
-            b.enabled = true;
+    List<Road> _roads = new List<Road>();
+
+    public int HardpointCount => _boundaries.Length;
+
+    void Awake(){
+        if (!Active && _all.Count == 0){
+            Activate();
         }
-        foreach (var i in indices){
-            _boundaries[i].enabled = false;
+        _all.Add(this);
+    }
+    void OnDestroy(){
+        _all.Remove(this);
+    }
+
+    public void AddToRoad(Road r){
+        float angle = r.transform.eulerAngles.y - 90;
+        angle = Mathf.Repeat(angle, 360);
+        Vector3 joinPoint = r.Joint2;
+        Vector3 offset = Polar.FromPolar(Mathf.Deg2Rad * angle, RadiusOuter, Vector3.zero);
+        Vector3 pos = joinPoint - offset;
+        pos.y = 0;
+        transform.position = pos;
+        DisableBoundary(-r.transform.forward, false);
+    }
+    public void AddRoad(Road r, float angleDeg){
+        DisableBoundary(r.transform.forward, true);
+    }
+    void DisableBoundary(Vector3 fwd, bool gameObject){
+        foreach (var b in _boundaries){
+            var bFwd = b.transform.forward;
+            if (Vector3.Angle(bFwd, fwd) < 5){
+                if (gameObject){
+                    b.gameObject.SetActive(false);
+                } else {
+                    b.enabled = false;
+                }
+            }
+        }
+    }
+    public int GetBoundaryIndex(Vector3 forward){
+        for (int i=0; i<HardpointCount; ++i){
+            if (Vector3.Angle(forward, _boundaries[i].transform.forward) < 5){
+                return i;
+            }
+        }
+        return -1;
+    }
+    public void Activate(){
+        if (Active != this){
+            Active = this;
         }
     }
 

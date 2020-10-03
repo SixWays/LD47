@@ -12,18 +12,7 @@ public abstract class Car : MonoBehaviour {
     protected Roundabout _currentRoundabout;
 
     protected abstract float CurrentRadius {get;}
-
-    protected Vector3 FromPolar(float theta, float radius, Vector3 centre){
-        return centre + (radius * new Vector3 (Mathf.Cos(theta), 0, Mathf.Sin(theta)));
-    }
-    protected float ToPolar(Vector3 position, Vector3 centre){
-        Vector3 r = position-centre;
-        float radius = r.magnitude;
-        return Mathf.Atan2(r.z, r.x);
-    }
-    protected Vector3 PolarForward(float theta, float radius, float sign=1){
-        return FromPolar(theta + (sign*0.01f), radius, Vector3.zero) - FromPolar(theta, radius, Vector3.zero);
-    }
+    
     protected Vector3 _nearestEntry {
         get {
             Vector3 entry = Vector3.zero;
@@ -60,7 +49,7 @@ public abstract class Car : MonoBehaviour {
             float dTheta = Vector3.SignedAngle(startFwd, endFwd, -Vector3.up) * Mathf.Deg2Rad;
             Debug.Log($"dTheta: {dTheta} radius: {radius}");
             float arcLength = Mathf.Abs(dTheta * radius);
-            float startTheta = Mathf.Repeat(ToPolar(transform.position, centre), Mathf.PI*2);
+            float startTheta = Mathf.Repeat(Polar.ToPolar(transform.position, centre), Mathf.PI*2);
             float endTheta = startTheta + dTheta;
 
             float time = arcLength / Speed;
@@ -76,7 +65,7 @@ public abstract class Car : MonoBehaviour {
                 float p = t/time;
                 float theta = Mathf.Lerp(startTheta, endTheta, p);
                 theta = Mathf.Repeat(theta, Mathf.PI * 2);
-                Vector3 circlePos = FromPolar(theta, radius, centre);
+                Vector3 circlePos = Polar.FromPolar(theta, radius, centre);
                 transform.position = Vector3.Lerp(circlePos, Vector3.Lerp(startPoint,endPoint,p), Mathf.Sqrt(p));
                 transform.rotation = Quaternion.Slerp(Quaternion.LookRotation(startFwd, Vector3.up), Quaternion.LookRotation(endFwd, Vector3.up), p);
                 t += Time.deltaTime;
@@ -101,8 +90,8 @@ public abstract class Car : MonoBehaviour {
                 float dTheta = distance / CurrentRadius;
                 _theta += dTheta;
                 _theta = Mathf.Repeat(_theta, Mathf.PI*2);
-                transform.position = FromPolar(_theta, CurrentRadius, _currentRoundabout.transform.position);
-                transform.forward = PolarForward(_theta, CurrentRadius);
+                transform.position = Polar.FromPolar(_theta, CurrentRadius, _currentRoundabout.transform.position);
+                transform.forward = Polar.PolarForward(_theta, CurrentRadius);
             }
         }
     }
@@ -116,17 +105,17 @@ public abstract class Car : MonoBehaviour {
                 transform.position = _nearestEntry;
                 transform.forward = _currentRoad.GetForward(transform.position);
             } else if (_currentRoundabout){
-                _theta = ToPolar(transform.position, _currentRoundabout.transform.position);
-                transform.position = FromPolar(_theta, _currentRoundabout.RadiusOuter, _currentRoundabout.transform.position);
-                transform.forward = PolarForward(_theta, _currentRoundabout.RadiusOuter);
+                _theta = Polar.ToPolar(transform.position, _currentRoundabout.transform.position);
+                transform.position = Polar.FromPolar(_theta, _currentRoundabout.RadiusOuter, _currentRoundabout.transform.position);
+                transform.forward = Polar.PolarForward(_theta, _currentRoundabout.RadiusOuter);
             }
         } else if (_currentRoad) {
             var r = c.GetComponent<Roundabout>();
             if (r){
                 _currentRoundabout = r;
-                _theta = ToPolar(transform.position, _currentRoundabout.transform.position);
-                Vector3 target = FromPolar(_theta + _entryOffsetRadians, CurrentRadius, _currentRoundabout.transform.position);
-                Vector3 fwd = PolarForward(_theta + _entryOffsetRadians, CurrentRadius);
+                _theta = Polar.ToPolar(transform.position, _currentRoundabout.transform.position);
+                Vector3 target = Polar.FromPolar(_theta + _entryOffsetRadians, CurrentRadius, _currentRoundabout.transform.position);
+                Vector3 fwd = Polar.PolarForward(_theta + _entryOffsetRadians, CurrentRadius);
                 Transfer(target, fwd, ()=>{
                     _currentRoad=null;
                     _theta = _theta + _entryOffsetRadians;

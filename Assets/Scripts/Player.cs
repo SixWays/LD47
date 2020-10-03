@@ -51,10 +51,18 @@ public class Player : Car {
                 Transfer(c.transform.position, r.GetForward(c.transform.position), ()=>{
                     _state = PlayerState.Travelling;
                     _currentRoad = r;
+                    r.PlayerEnteredRoad();
                 });
             }
         } else if (_state != PlayerState.Dying) {
             base.OnTriggerEnter(c);
+            // Transitioned to new roundabout
+            if (_currentRoundabout && _currentRoad && Road.Active == _currentRoad){
+                _currentRoad.PlayerExitedRoad();
+                _currentRoundabout.Activate();
+                _currentRoad.SetActiveRoundabout(_currentRoundabout);
+                _currentRoad = null;
+            }
         }
     }
     void OnCollisionEnter(Collision c){
