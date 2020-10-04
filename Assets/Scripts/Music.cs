@@ -3,12 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Music : MonoBehaviour {
+    static Music _i;
     [SerializeField] AudioSource _main;
     [SerializeField] AudioSource _loop;
     [SerializeField] float _minLoopTime;
     [SerializeField] float _loopSpeedupTime;
 
     IEnumerator Start(){
+        if (_i){
+            Destroy(gameObject);
+        } else {
+            _i = this;
+            transform.SetParent(null);
+            DontDestroyOnLoad(gameObject);
+        }
         if (!_loop.clip){
             Debug.Log("NO MUSIC");
             yield break;

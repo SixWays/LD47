@@ -35,6 +35,7 @@ public class HighwayManagement : MonoBehaviour {
 
     [SerializeField] UnityEvent _onCrash;
     [SerializeField] UnityEvent _onDie;
+    [SerializeField] UnityEvent _onPickup;
 
     int _roundaboutIndex = 0;
     int _score = 0;
@@ -62,7 +63,9 @@ public class HighwayManagement : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.Space) && Player.Instance.State == Player.PlayerState.Dying && _dead){
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
-        Camera.main.backgroundColor = _cameraColorGradient.Evaluate(Mathf.Clamp01(Time.time / _cameraColorTime));
+        float t = Mathf.Clamp01(Time.time / _cameraColorTime);
+        Camera.main.backgroundColor = _cameraColorGradient.Evaluate(t);
+        Shader.SetGlobalFloat("_PentagramAlpha", t);
     }
 
     [ContextMenu("Spawn")]
@@ -164,6 +167,9 @@ public class HighwayManagement : MonoBehaviour {
         cam.position = camEnd;
 
         onDone?.Invoke();
+    }
+    public static void OnPickup(PickupBase p){
+        _i._onPickup.Invoke();
     }
 
     public static void OnPlayerDie(Player.DeathType type){

@@ -104,6 +104,10 @@ public class Player : Car {
         Fuel += f;
         Fuel = Mathf.Clamp01(Fuel);
     }
+    public void AddSanity(float s){
+        Sanity += s;
+        Sanity = Mathf.Clamp01(Sanity);
+    }
     void Die(DeathType type){
         var rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.None;

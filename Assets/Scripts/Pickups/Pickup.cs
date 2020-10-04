@@ -6,6 +6,7 @@ public abstract class PickupBase : MonoBehaviour {
     public void OnPickup(Player p){
         OnPickedUp(p);
         Destroy(gameObject);
+        HighwayManagement.OnPickup(this);
     }
     protected abstract void OnPickedUp(Player p);
 }
