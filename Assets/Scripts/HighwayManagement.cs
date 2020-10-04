@@ -6,8 +6,14 @@ using UnityEngine.SceneManagement;
 public class HighwayManagement : MonoBehaviour {
     static HighwayManagement _i;
 
-    public static float SpeedScale {get; private set;} = 1;
-    public static int Score {get; private set;}
+    public static float SpeedScale => _i._speedScale;
+    public static float SanityScale => _i._sanityScale;
+    public static int Score => _i._score;
+    public static int Lives => _i._lives;
+    public static bool UseFuel => _i._activeFuel;
+    public static bool UseLives => _i._activeLives;
+    public static bool UseSanity => _i._activeSanity;
+    public static float UiAppearTime => _i._uiAppearTime;
 
     [SerializeField] Roundabout[] _roundabouts;
     [SerializeField] Road[] _roads;
@@ -15,8 +21,20 @@ public class HighwayManagement : MonoBehaviour {
     [SerializeField, Range(0f,1f)] float _roadChance;
     [SerializeField] float _camMoveTime;
     [SerializeField] float _speedFactor;
+    [SerializeField] float _sanityFactor;
+    [SerializeField] Player _playerPrefab;
+    [SerializeField] float _respawnTime=2;
+    [SerializeField] float _uiAppearTime = 1;
 
     int _roundaboutIndex = 0;
+    int _score = 0;
+    int _lives = 0;
+    bool _dead = false;
+
+    bool _activeLives, _activeFuel, _activeSanity;
+
+    float _speedScale = 1;
+    float _sanityScale = 1;
 
     void Awake(){
         if (_i){
@@ -26,15 +44,19 @@ public class HighwayManagement : MonoBehaviour {
         }
     }
     void Update(){
-        if (Input.GetKeyDown(KeyCode.Space) && Player.Instance.State == Player.PlayerState.Dying){
+        if (Input.GetKeyDown(KeyCode.Space) && Player.Instance.State == Player.PlayerState.Dying && _dead){
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
 
     [ContextMenu("Spawn")]
     public static void SpawnRoundabout(){
-        ++Score;
-        SpeedScale += _i._speedFactor;
+        ++_i._score;
+        _i._speedScale += _i._speedFactor;
+
+        if (UseSanity){
+            _i._sanityScale += _i._sanityFactor;
+        }
 
         // Go sequentially through prefabs to allow tutorialisation
         var prefab = _i._roundabouts[_i._roundaboutIndex];
@@ -114,6 +136,46 @@ public class HighwayManagement : MonoBehaviour {
             }
 
             cam.position = camEnd;
+        }
+    }
+
+    public static void OnPlayerDie(Player.DeathType type){
+        --_i._lives;
+        if (_i._lives < 0){
+            _i._lives = 0;
+            _i._dead = true;
+        } else {
+            _i.StartCoroutine(_Respawn());
+        }
+
+        IEnumerator _Respawn(){
+            yield return new WaitForSeconds(_i._respawnTime);
+            Destroy(Player.Instance.gameObject);
+            var player = Instantiate<Player>(_i._playerPrefab);
+            player.transform.position = Polar.FromPolar(0, Roundabout.Active.RadiusOuter, Roundabout.Active.transform.position);
+            player.transform.forward = Polar.PolarForward(0, Roundabout.Active.RadiusOuter);
+        }
+    }
+
+    public static void AddLives(int lives){
+        if (UseLives){
+            _i._lives += lives;
+        }
+    }
+
+    public static void ActivateFuel(){
+        if (!UseFuel){
+            _i._activeFuel = true;
+        }
+    }
+    public static void ActivateLives(){
+        if (!UseLives){
+            _i._activeLives = true;
+        }
+    }
+    public static void ActivateSanity(){
+        if (!UseSanity){
+            _i._activeSanity = true;
         }
     }
 }

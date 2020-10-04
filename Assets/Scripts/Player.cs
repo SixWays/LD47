@@ -9,10 +9,20 @@ public class Player : Car {
         Transferring,
         Dying
     }
+    public enum DeathType {
+        Vehicle,
+        Boundary,
+        WrongWay,
+        Fuel,
+        Madness
+    }
     PlayerState _state = PlayerState.Travelling;
     public PlayerState State => _state;
 
     public static Player Instance {get; private set;}
+
+    public float Fuel {get; private set;} = 1;
+    public float Sanity {get; private set;} = 1;
 
     [SerializeField] float _speed;
     [SerializeField] float _roadSpeed;
@@ -26,6 +36,8 @@ public class Player : Car {
     }
     [SerializeField] float _turnRadius;
     [SerializeField] float _invulnTime=0.5f;
+    [SerializeField] float _fuelTime = 30f;
+    [SerializeField] float _sanityTime = 60f;
 
     protected override float CurrentRadius => _currentRoundabout.RadiusInner;
 
@@ -54,6 +66,17 @@ public class Player : Car {
                         _currentRoad = null;
                         _currentRoundabout = null;
                     }
+
+                    if (HighwayManagement.UseFuel){
+                        Fuel -= (Time.deltaTime / _fuelTime);
+                        if (Fuel <= 0){
+                            Fuel = 0;
+                            Die(DeathType.Fuel);
+                        }
+                    }
+                    if (HighwayManagement.UseSanity){
+                        Sanity -= HighwayManagement.SanityScale * (Time.deltaTime / _sanityTime);
+                    }
                 }
                 break;
             case PlayerState.Turning:
@@ -72,7 +95,25 @@ public class Player : Car {
                 break;
         }
     }
+    public void AddFuel(float f){
+        Fuel += f;
+        Fuel = Mathf.Clamp01(Fuel);
+    }
+    void Die(DeathType type){
+        var rb = GetComponent<Rigidbody>();
+        rb.constraints = RigidbodyConstraints.None;
+        _state = PlayerState.Dying;
+        enabled = false;
+        Debug.LogFormat(this, "Death: {0}", type);
+        HighwayManagement.OnPlayerDie(type);
+    }
     protected override void OnTriggerEnter(Collider c){
+        var p = c.GetComponent<PickupBase>();
+        if (p){
+            p.OnPickup();
+            return;
+        }
+
         if (_state == PlayerState.Turning){
             var r = c.GetComponentInParent<Road>();
             if (r && c.CompareTag("Entryu")){
@@ -103,10 +144,13 @@ public class Player : Car {
     void OnCollisionEnter(Collision c){
         if (Time.time > _timeVulnerable && !_currentRoad && _state != PlayerState.Dying && _state != PlayerState.Transferring && !c.collider.CompareTag("Floor")){
             Debug.LogFormat(c.collider, "DIE: {0}", c.collider.name);
-            var rb = GetComponent<Rigidbody>();
-            rb.constraints = RigidbodyConstraints.None;
-            _state = PlayerState.Dying;
-            enabled = false;
+            if (c.collider.GetComponentInParent<Ai>()){
+                Die(DeathType.Vehicle);
+            } else if (c.collider.CompareTag("Block")){
+                Die(DeathType.WrongWay);
+            } else {
+                Die(DeathType.Boundary);
+            }
         }
     }
 
