@@ -21,16 +21,18 @@ public class HighwayManagement : MonoBehaviour {
     [SerializeField] int _minSpaceBetweenRoads;
     [SerializeField, Range(0f,1f)] float _roadChance;
     [SerializeField] float _camMoveTime;
+    [SerializeField] float _camDeathTime;
     [SerializeField] float _speedFactor;
     [SerializeField] float _sanityFactor;
     [SerializeField] Player _playerPrefab;
     [SerializeField] float _respawnTime=2;
     [SerializeField] float _uiAppearTime = 1;
-    [SerializeField] float _spawnFactor = 1.2f;
+    [SerializeField] float _spawnFactor = 0.2f;
+    [SerializeField] int _startingLives = 0;
 
     int _roundaboutIndex = 0;
     int _score = 0;
-    int _lives = 0;
+    int _lives;
     bool _dead = false;
 
     bool _activeLives, _activeFuel, _activeSanity;
@@ -45,6 +47,7 @@ public class HighwayManagement : MonoBehaviour {
             Destroy(gameObject);
         } else {
             _i = this;
+            _lives = _startingLives;
         }
     }
     void Update(){
@@ -114,7 +117,15 @@ public class HighwayManagement : MonoBehaviour {
             }
         }
 
-        _i.StartCoroutine(_MoveCamera());
+        var cam = Camera.main.transform;
+        var camStart = cam.position;
+        var camEnd = camStart;
+        camEnd.x = clone.transform.position.x;
+        camEnd.z = clone.transform.position.z;
+        if (clone.OffsetCamera){
+            camEnd.x += 10f;
+        }
+        _i.StartCoroutine(MoveCamera(_i._camMoveTime, camEnd));
 
         int _Wrap(int i){
             int max = clone.HardpointCount;
@@ -126,27 +137,21 @@ public class HighwayManagement : MonoBehaviour {
             }
             return i;
         }
+    }
 
-        IEnumerator _MoveCamera(){
-            var cam = Camera.main.transform;
-            var camStart = cam.position;
-            var camEnd = camStart;
-            camEnd.x = clone.transform.position.x;
-            camEnd.z = clone.transform.position.z;
-            if (clone.OffsetCamera){
-                camEnd.x += 10f;
-            }
-
-            float t = 0;
-            Vector3 slew = Vector3.zero;
-            while (Vector3.Distance(cam.position, camEnd) > 0.01f){
-                cam.position = Vector3.SmoothDamp(cam.position, camEnd, ref slew, _i._camMoveTime);
-                t += Time.unscaledDeltaTime;
-                yield return null;
-            }
-
-            cam.position = camEnd;
+    static IEnumerator MoveCamera(float smooth, Vector3 camEnd, System.Action onDone=null){
+        var cam = Camera.main.transform;
+        float t = 0;
+        Vector3 slew = Vector3.zero;
+        while (Vector3.Distance(cam.position, camEnd) > 0.01f){
+            cam.position = Vector3.SmoothDamp(cam.position, camEnd, ref slew, _i._camMoveTime);
+            t += Time.unscaledDeltaTime;
+            yield return null;
         }
+
+        cam.position = camEnd;
+
+        onDone?.Invoke();
     }
 
     public static void OnPlayerDie(Player.DeathType type){
@@ -158,15 +163,30 @@ public class HighwayManagement : MonoBehaviour {
             _i.StartCoroutine(_Respawn());
         }
 
+        if (_i._dead){
+            if (!Roundabout.Active.OffsetCamera){
+                var camEnd = Camera.main.transform.position + Vector3.right * 10;
+                _i.StartCoroutine(MoveCamera(_i._camDeathTime, camEnd, ()=>{
+                    DeathsUi.OnDeath(type, true);
+                }));
+            } else {
+                DeathsUi.OnDeath(type, true);
+            }
+        } else {
+            DeathsUi.OnDeath(type, false);
+        }
+
         IEnumerator _Respawn(){
             yield return new WaitForSeconds(_i._respawnTime);
+            Debug.Log("Destroy Player");
             Destroy(Player.Instance.gameObject);
+            yield return null;
             var player = Instantiate<Player>(_i._playerPrefab);
+            Debug.Log("Spawn Player", player);
             player.transform.position = Polar.FromPolar(0, Roundabout.Active.RadiusOuter, Roundabout.Active.transform.position);
             player.transform.forward = Polar.PolarForward(0, Roundabout.Active.RadiusOuter);
-        }
+        }   
     }
-
     public static void AddLives(int lives){
         if (UseLives){
             _i._lives += lives;

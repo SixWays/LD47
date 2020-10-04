@@ -12,6 +12,9 @@ public class Hud : MonoBehaviour {
     [SerializeField] GameObject _score;
     [SerializeField] TextMeshProUGUI _scoreText;
 
+    [SerializeField] AudioSource _scoreIncreaseSound;
+    [SerializeField] AudioSource _livesIncreaseSound;
+
     [SerializeField] float _flashTime;
     [SerializeField] float _flashRate;
 
@@ -21,7 +24,7 @@ public class Hud : MonoBehaviour {
     int _lastLives;
     bool _wasFuelActive, _wasLivesActive, _wasSanityActive;
 
-    void Start(){
+    IEnumerator Start(){
         _fuelSlider = _fuel.GetComponentInChildren<Slider>();
         _sanitySlider = _sanity.GetComponentInChildren<Slider>();
         
@@ -33,33 +36,53 @@ public class Hud : MonoBehaviour {
         _lives.SetActive(_wasLivesActive);
         _sanity.SetActive(_wasSanityActive);
 
-        _scoreText.text = HighwayManagement.Score.ToString();
+        _lastLives = HighwayManagement.Lives;
+        _livesText.text = _lastLives.ToString();
+
+        int score = HighwayManagement.Score;
+        bool wait = false;
+        if (score > 0){
+            --score;
+            wait = true;
+        }
+        _scoreText.text = score.ToString();
+
+        if (wait){
+            yield return new WaitForSeconds(1f);
+            _scoreText.text = (score+1).ToString();
+            _scoreIncreaseSound.Play();
+        }
     }
     void Update() {
+        if (!Player.Instance) return;
+        
         if (Player.Instance.Fuel != _lastFuel){
             _fuelSlider.normalizedValue = _lastFuel = Player.Instance.Fuel;
-        }
-        if (HighwayManagement.Lives != _lastLives){
-            _lastLives = HighwayManagement.Lives;
-            _livesText.text = _lastLives.ToString();
         }
 
         // madness
 
         if (HighwayManagement.UseFuel && !_wasFuelActive){
-            StartCoroutine(Flash(_fuel));
+            StartCoroutine(_Flash(_fuel));
             _wasFuelActive = true;
         }
         if (HighwayManagement.UseLives && !_wasLivesActive){
-            StartCoroutine(Flash(_lives));
+            StartCoroutine(_Flash(_lives));
             _wasLivesActive = true;
         }
         if (HighwayManagement.UseSanity && !_wasSanityActive){
-            StartCoroutine(Flash(_sanity));
+            StartCoroutine(_Flash(_sanity));
             _wasSanityActive = true;
         }
 
-        IEnumerator Flash(GameObject go){
+        if (HighwayManagement.Lives != _lastLives){
+            _lastLives = HighwayManagement.Lives;
+            _livesText.text = _lastLives.ToString();
+            _livesIncreaseSound.Play();
+            StartCoroutine(_Flash(_lives));
+        }
+
+        IEnumerator _Flash(GameObject go){
             float tFlash = 1f/_flashRate;
             int flashes = Mathf.RoundToInt(_flashRate*_flashTime);
             go.SetActive(true);

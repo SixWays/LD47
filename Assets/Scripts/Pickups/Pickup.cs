@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class PickupBase : MonoBehaviour {
-    public void OnPickup(){
-        OnPickedUp();
+    public void OnPickup(Player p){
+        OnPickedUp(p);
         Destroy(gameObject);
     }
-    protected abstract void OnPickedUp();
+    protected abstract void OnPickedUp(Player p);
 }
 
 [RequireComponent(typeof(SphereCollider))]

@@ -39,6 +39,8 @@ public class Player : Car {
     [SerializeField] float _fuelTime = 30f;
     [SerializeField] float _sanityTime = 60f;
 
+    [SerializeField] UnityEngine.Events.UnityEvent _onDie;
+
     protected override float CurrentRadius => _currentRoundabout.RadiusInner;
 
     float _timeVulnerable;
@@ -48,6 +50,7 @@ public class Player : Car {
             Destroy(gameObject);
         } else {
             Instance = this;
+            _timeVulnerable = Time.time + _invulnTime;
         }
     }
     void OnDestroy(){
@@ -110,12 +113,12 @@ public class Player : Car {
         enabled = false;
         Debug.LogFormat(this, "Death: {0}", type);
         HighwayManagement.OnPlayerDie(type);
-        DeathsUi.OnDeath(type);
+        _onDie.Invoke();
     }
     protected override void OnTriggerEnter(Collider c){
         var p = c.GetComponent<PickupBase>();
         if (p){
-            p.OnPickup();
+            p.OnPickup(this);
             return;
         }
 

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class UiFade : MonoBehaviour {
@@ -21,6 +21,10 @@ public class UiFade : MonoBehaviour {
         public AnimationCurve Curve => _curve;
         [SerializeField] bool _useCurve;
         public bool UseCurve => _useCurve;
+        [SerializeField] UnityEvent _onStart;
+        public UnityEvent OnStart => _onStart;
+        [SerializeField] UnityEvent _onEnd;
+        public UnityEvent OnEnd => _onEnd;
     }
 
     [SerializeField] List<FadeAction> _fadeQueue = new List<FadeAction>();
@@ -50,6 +54,8 @@ public class UiFade : MonoBehaviour {
                 AnimationCurve curve = f.UseCurve ? f.Curve : _fadeCurve;
                 yield return new WaitForSeconds(f.DelayTime);
 
+                f.OnStart.Invoke();
+
                 float t=0;
                 while (t<f.FadeTime){
                     float p = t/f.FadeTime;
@@ -60,7 +66,9 @@ public class UiFade : MonoBehaviour {
                     t += Time.unscaledDeltaTime;
                     yield return null;
                 }
-                _cg.alpha = f.FadeIn ? 1 : 0;
+                _cg.alpha = curve.Evaluate(f.FadeIn ? 1 : 0);
+
+                f.OnEnd.Invoke();
             }
 
             _fade = null;
