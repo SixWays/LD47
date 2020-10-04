@@ -42,6 +42,8 @@ public class Player : Car {
 
     protected override float CurrentRadius => _currentRoundabout.RadiusInner;
 
+    protected override bool _canStartOnRoad => false;
+
     void Awake(){
         if (Instance){
             Destroy(gameObject);
@@ -121,7 +123,8 @@ public class Player : Car {
             var r = c.GetComponentInParent<Road>();
             if (r && c.CompareTag("Entryu")){
                 _state = PlayerState.Transferring;
-                Transfer(c.transform.position, r.GetForward(c.transform.position), ()=>{
+                _currentRoadFwd = r.GetForward(c.transform.position);
+                Transfer(c.transform.position, _currentRoadFwd, ()=>{
                     _state = PlayerState.Travelling;
                     _currentRoad = r;
                     r.PlayerEnteredRoad();

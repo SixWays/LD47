@@ -4,6 +4,7 @@ using UnityEngine;
 
 public abstract class Car : MonoBehaviour {
     protected abstract float speed {get;}
+    protected abstract bool _canStartOnRoad {get;}
     public float Speed {
         get {
             if (Time.time < _timeToGo) return 0;
@@ -16,8 +17,9 @@ public abstract class Car : MonoBehaviour {
 
     protected Coroutine _transfer {get; private set;}
     protected float _theta;
-    protected Road _currentRoad;
-    protected Roundabout _currentRoundabout;
+    public Road _currentRoad;
+    protected Vector3 _currentRoadFwd;
+    public Roundabout _currentRoundabout;
 
     protected abstract float CurrentRadius {get;}
     
@@ -44,6 +46,8 @@ public abstract class Car : MonoBehaviour {
     }
 
     Vector2 XZ(Vector3 v){return new Vector2(v.x, v.z);}
+    Vector3 _tp0, _tp1, _tp2, _tp3, _tStart, _tEnd, _tsFwd, _teFwd, _tCtr;
+    float _tRad;
     protected void Transfer(Vector3 endPoint, Vector3 endFwd, System.Action onTransferred=null){
         _transfer = StartCoroutine(_Transfer());
         IEnumerator _Transfer(){
@@ -60,7 +64,17 @@ public abstract class Car : MonoBehaviour {
             Vector3 p1 = startPoint + (startRight * 100);
             Vector3 p2 = endPoint;
             Vector3 p3 = endPoint - (endRight * 100);
-            LineIntersection(XZ(p0), XZ(p1), XZ(p2), XZ(p3), ref ctr2);
+            // Try every fucking permutation
+            if(!LineIntersection(XZ(p0), XZ(p1), XZ(p2), XZ(p3), ref ctr2)){
+                p3 = endPoint + (endRight * 100);
+                if (!LineIntersection(XZ(p0), XZ(p1), XZ(p2), XZ(p3), ref ctr2)){
+                    p1 = startPoint - (startRight * 100);
+                    if (!LineIntersection(XZ(p0), XZ(p1), XZ(p2), XZ(p3), ref ctr2)){
+                        p3 = endPoint - (endRight * 100);
+                        LineIntersection(XZ(p0), XZ(p1), XZ(p2), XZ(p3), ref ctr2);
+                    }
+                }
+            }
             Vector3 centre = new Vector3(ctr2.x, 0, ctr2.y);
             float radius = Vector3.Distance(startPoint, centre);
 
@@ -71,11 +85,21 @@ public abstract class Car : MonoBehaviour {
 
             float time = arcLength / Speed;
 
-            Debug.DrawLine(p0, p1, Color.magenta, 3f);
-            Debug.DrawLine(p2, p3, Color.magenta, 3f);
-            Debug.DrawRay(startPoint, startFwd*100, Color.yellow, 3f);
-            Debug.DrawRay(endPoint, endFwd*100, Color.yellow, 3f);
-            Debug.DrawLine(startPoint, centre, Color.green, 3f);
+            // Debug.DrawLine(p0, p1, Color.magenta, 10f);
+            // Debug.DrawLine(p2, p3, Color.magenta, 10f);
+            // Debug.DrawRay(startPoint, startFwd*100, Color.yellow, 10f);
+            // Debug.DrawRay(endPoint, endFwd*100, Color.yellow, 10f);
+            // Debug.DrawLine(startPoint, centre, Color.green, 10f);
+            _tp0 = p0;
+            _tp1 = p1;
+            _tp2 = p2;
+            _tp3 = p3;
+            _tStart = startPoint;
+            _tsFwd = startFwd;
+            _tEnd = endPoint;
+            _teFwd = endFwd;
+            _tCtr = centre;
+            _tRad = radius;
 
             float t = 0;
             while (t < time){
@@ -99,7 +123,7 @@ public abstract class Car : MonoBehaviour {
         if (_transfer == null){
             float distance = Speed * Time.deltaTime;
             if (_currentRoad){
-                transform.position += transform.forward * distance;
+                transform.position += _currentRoadFwd * distance;
             } else if (_currentRoundabout) {
                 // c = 2pr
                 // l = theta r
@@ -116,11 +140,13 @@ public abstract class Car : MonoBehaviour {
     protected virtual void OnTriggerEnter(Collider c){
         if (!_currentRoad && !_currentRoundabout){
             // Just spawned
-            _currentRoad = c.GetComponent<Road>();
+            if (_canStartOnRoad){
+                _currentRoad = c.GetComponent<Road>();
+            }
             _currentRoundabout = c.GetComponent<Roundabout>();
             if (_currentRoad){
                 transform.position = _nearestEntry;
-                transform.forward = _currentRoad.GetForward(transform.position);
+                transform.forward = _currentRoadFwd = _currentRoad.GetForward(transform.position);
             } else if (_currentRoundabout){
                 _theta = Polar.ToPolar(transform.position, _currentRoundabout.transform.position);
                 transform.position = Polar.FromPolar(_theta, _currentRoundabout.RadiusOuter, _currentRoundabout.transform.position);
@@ -142,6 +168,22 @@ public abstract class Car : MonoBehaviour {
         }
     }
     protected virtual void OnEnteredRoundabout(Roundabout r){}
+
+    void OnDrawGizmosSelected(){
+        if (_currentRoad && _currentRoundabout){
+            var gc = Gizmos.color;
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawLine(_tp0, _tp1);
+            Gizmos.DrawLine(_tp2, _tp3);
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawRay(_tStart, _tsFwd*100);
+            Gizmos.DrawRay(_tEnd, _teFwd*100);
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(_tStart, _tCtr);
+            Gizmos.DrawWireSphere(_tCtr, _tRad);
+            Gizmos.color = gc;
+        }
+    }
 
     public static bool LineIntersection( Vector2 p1,Vector2 p2, Vector2 p3, Vector2 p4, ref Vector2 intersection )
     {

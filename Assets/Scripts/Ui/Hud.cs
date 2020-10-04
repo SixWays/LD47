@@ -20,7 +20,7 @@ public class Hud : MonoBehaviour {
 
     Slider _fuelSlider, _sanitySlider;
 
-    float _lastFuel, _lastMadness;
+    float _lastFuel, _lastSanity;
     int _lastLives;
     bool _wasFuelActive, _wasLivesActive, _wasSanityActive;
 
@@ -58,6 +58,9 @@ public class Hud : MonoBehaviour {
         
         if (Player.Instance.Fuel != _lastFuel){
             _fuelSlider.normalizedValue = _lastFuel = Player.Instance.Fuel;
+        }
+        if (Player.Instance.Sanity != _lastSanity){
+            _sanitySlider.normalizedValue = _lastSanity = Player.Instance.Sanity;
         }
 
         // madness

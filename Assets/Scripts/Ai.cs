@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Ai : Car {
+    protected override bool _canStartOnRoad => true;
+
     [SerializeField] Vector2 _minMaxSpeed;
     float _speed;
     protected override float speed => _speed;
     [SerializeField, Range(0f,1f)] float _exitChance;
 
     protected override float CurrentRadius => _currentRoundabout.RadiusOuter;
+    bool _hasHadRoad = false;
 
     void Start(){
         _speed = Random.Range(_minMaxSpeed.x, _minMaxSpeed.y);
@@ -25,7 +28,8 @@ public class Ai : Car {
                     _currentRoad.RegisterAi(this);
                     _currentRoundabout.UnregisterAi(this);
                     _currentRoundabout = null;
-                    Transfer(_nearestEntry, _currentRoad.GetForward(_nearestEntry));
+                    _currentRoadFwd = _currentRoad.GetForward(_nearestEntry);
+                    Transfer(_nearestEntry, _currentRoadFwd);
                 }
             }
         } else {
@@ -35,9 +39,17 @@ public class Ai : Car {
                 Destroy(gameObject);
             }
         }
+
+        _hasHadRoad = _currentRoad || _currentRoundabout;
+    }
+    void Update(){
+        if (_hasHadRoad && !_currentRoad && !_currentRoundabout){
+            Destroy(gameObject);
+        }
     }
     protected override void OnEnteredRoundabout(Roundabout r){
         _currentRoundabout.UnregisterAi(this);
         r.RegisterAi(this);
-    }
+        _currentRoadFwd = Vector3.zero;
+    }    
 }
