@@ -3,6 +3,25 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
 
+public static class Ext_List {
+    /// <summary>In-place Fischer-Yates shuffle</summary>
+    public static void Shuffle<T>(this List<T> a){
+        int c = a.Count;
+        
+        for (int i=0; i<c; ++i){
+            int r = i + UnityEngine.Random.Range(0,c-i);
+            var t = a[r];
+            a[r] = a[i];
+            a[i] = t;
+        }
+    }
+    public static bool AddUnique<T>(this List<T> l, T item){
+        if (l.Contains(item)) return false;
+        l.Add(item);
+        return true;
+    }
+}
+
 public class Roundabout : RoadBase {
     static List<Roundabout> _all = new List<Roundabout>();
     public static ReadOnlyCollection<Roundabout> All => _all.AsReadOnly();
@@ -16,6 +35,13 @@ public class Roundabout : RoadBase {
     [SerializeField] bool _offsetCamera = false;
 
     [SerializeField] UiFade _instructions;
+
+    [Header("Pickups")]
+    [SerializeField] PickupFuel _fuel;
+    [SerializeField] PickupLives _life;
+    [SerializeField] PickupSanity _sanity;
+    [SerializeField] PickupBase _forcePickup;
+    [SerializeField, Range(0,1)] float _pickupChance;
 
     public float RadiusInner => _radiusInner;
     public float RadiusOuter => _radiusOuter;
@@ -39,7 +65,7 @@ public class Roundabout : RoadBase {
 
     public void FadeOutInstructions(){
         if (_instructions){
-            _instructions.FadeOut(1);
+            _instructions.FadeOut();
         }
     }
 
@@ -66,6 +92,48 @@ public class Roundabout : RoadBase {
     public void AddRoad(Road r, float angleDeg){
         DisableBoundary(r.transform.forward, true);
         _roads.Add(r);
+    }
+    public void OnRoadsAdded(){
+        Dictionary<Road, PickupBase> toSpawn = new Dictionary<Road, PickupBase>();
+        if (_forcePickup){
+            // Don't spawn on incoming road
+            var r = _roads[Random.Range(1, _roads.Count)];
+            toSpawn.Add(r, _forcePickup);
+        } else {
+            if (Random.Range(0f,1f) < _pickupChance){
+                // Don't spawn on incoming road
+                int maxPickups = _roads.Count - 1;
+                maxPickups = Mathf.Min(maxPickups, 3);
+                int pickupCount = Random.Range(1, maxPickups);
+                List<Road> spawnPoints = new List<Road>();
+                for (int i=1; i<_roads.Count; ++i){
+                    spawnPoints.Add(_roads[i]);
+                }
+                spawnPoints.Shuffle();
+                List<PickupBase> pickups = new List<PickupBase>();
+                if (HighwayManagement.UseFuel){
+                    pickups.Add(_fuel);
+                }
+                if (HighwayManagement.UseLives){
+                    pickups.Add(_life);
+                }
+                if (HighwayManagement.UseSanity){
+                    pickups.Add(_sanity);
+                }
+                pickups.Shuffle();
+                pickupCount = Mathf.Min(pickupCount, pickups.Count);
+                for (int i=0; i<pickupCount; ++i){
+                    toSpawn.Add(spawnPoints[i], pickups[i]);
+                }
+            }
+        }
+
+        foreach (var a in toSpawn){
+            var p = Instantiate<PickupBase>(a.Value);
+            Vector3 radius = a.Key.Entry1 - transform.position;
+            radius *= 1.2f;
+            p.transform.position = transform.position + radius;
+        }
     }
     void DisableBoundary(Vector3 fwd, bool gameObject){
         foreach (var b in _boundaries){

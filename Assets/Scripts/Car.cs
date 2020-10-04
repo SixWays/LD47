@@ -4,8 +4,15 @@ using UnityEngine;
 
 public abstract class Car : MonoBehaviour {
     protected abstract float speed {get;}
-    public float Speed => speed * HighwayManagement.SpeedScale;
+    public float Speed {
+        get {
+            if (Time.time < _timeToGo) return 0;
+            return speed * HighwayManagement.SpeedScale;
+        }
+    } 
     [SerializeField] protected float _entryOffsetRadians = 0.1f;
+
+    [SerializeField] protected float _invulnTime=0.5f;
 
     protected Coroutine _transfer {get; private set;}
     protected float _theta;
@@ -24,6 +31,16 @@ public abstract class Car : MonoBehaviour {
             }
             return entry;
         }
+    }
+
+    protected float _timeVulnerable;
+    protected float _timeToGo;
+    IEnumerator Start(){
+        _timeVulnerable = _timeToGo = Time.time + _invulnTime;
+        var c = GetComponentInChildren<Collider>();
+        c.enabled = false;
+        yield return new WaitForSeconds(_invulnTime*0.9f);
+        c.enabled = true;
     }
 
     Vector2 XZ(Vector3 v){return new Vector2(v.x, v.z);}

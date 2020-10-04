@@ -31,12 +31,10 @@ public class Player : Car {
             if (_currentRoad && !_currentRoundabout){
                 return _speed * _roadSpeed;
             }
-            if (Time.time < _timeToGo) return 0;
             return _speed;
         }
     }
     [SerializeField] float _turnRadius;
-    [SerializeField] float _invulnTime=0.5f;
     [SerializeField] float _fuelTime = 30f;
     [SerializeField] float _sanityTime = 60f;
 
@@ -44,20 +42,12 @@ public class Player : Car {
 
     protected override float CurrentRadius => _currentRoundabout.RadiusInner;
 
-    float _timeVulnerable;
-    float _timeToGo;
-
-    IEnumerator Start(){
+    void Awake(){
         if (Instance){
             Destroy(gameObject);
         } else {
             Instance = this;
-            _timeVulnerable = _timeToGo = Time.time + _invulnTime;
         }
-        var c = GetComponentInChildren<Collider>();
-        c.enabled = false;
-        yield return new WaitForSeconds(_invulnTime*0.9f);
-        c.enabled = true;
     }
     void OnDestroy(){
         if (Instance == this){
@@ -117,7 +107,6 @@ public class Player : Car {
         rb.constraints = RigidbodyConstraints.None;
         _state = PlayerState.Dying;
         enabled = false;
-        Debug.LogFormat(this, "Death: {0}", type);
         HighwayManagement.OnPlayerDie(type);
         _onDie.Invoke();
     }
@@ -157,7 +146,6 @@ public class Player : Car {
     }
     void OnCollisionEnter(Collision c){
         if (Time.time > _timeVulnerable && !_currentRoad && _state != PlayerState.Dying && _state != PlayerState.Transferring && !c.collider.CompareTag("Floor")){
-            Debug.LogFormat(c.collider, "DIE: {0}", c.collider.name);
             if (c.collider.GetComponentInParent<Ai>()){
                 Die(DeathType.Vehicle);
             } else if (c.collider.CompareTag("Block")){

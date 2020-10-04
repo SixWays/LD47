@@ -123,6 +123,8 @@ public class HighwayManagement : MonoBehaviour {
             }
         }
 
+        clone.OnRoadsAdded();
+
         var cam = Camera.main.transform;
         var camStart = cam.position;
         var camEnd = camStart;
@@ -185,11 +187,9 @@ public class HighwayManagement : MonoBehaviour {
 
         IEnumerator _Respawn(){
             yield return new WaitForSeconds(_i._respawnTime);
-            Debug.Log("Destroy Player");
             Destroy(Player.Instance.gameObject);
             yield return null;
             var player = Instantiate<Player>(_i._playerPrefab);
-            Debug.Log("Spawn Player", player);
             player.transform.position = Polar.FromPolar(0, Roundabout.Active.RadiusInner, Roundabout.Active.transform.position);
             player.transform.forward = Polar.PolarForward(0, Roundabout.Active.RadiusInner);
         }   

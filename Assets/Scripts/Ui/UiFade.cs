@@ -74,7 +74,9 @@ public class UiFade : MonoBehaviour {
             _fade = null;
         }
     }
-    public void FadeOut(float time){
+    [ContextMenu("Fade Out")]
+    public void FadeOut(){
+        float time = 1;
         if (_fade != null){
             StopCoroutine(_fade);
         }
@@ -85,6 +87,7 @@ public class UiFade : MonoBehaviour {
             float t = 0;
             while (t < time){
                 _cg.alpha = Mathf.Lerp(0, a, 1f-(t/time));
+                t += Time.deltaTime;
                 yield return null;
             }
             _cg.alpha = 0;
