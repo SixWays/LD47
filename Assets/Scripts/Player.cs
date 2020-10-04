@@ -60,9 +60,14 @@ public class Player : Car {
             if (_currentRoundabout && _currentRoad && Road.Active == _currentRoad){
                 _currentRoad.PlayerExitedRoad();
                 _currentRoundabout.Activate();
-                _currentRoad.SetActiveRoundabout(_currentRoundabout);
+                StartCoroutine(_BlockRoad(_currentRoad, _currentRoundabout));
                 _currentRoad = null;
             }
+        }
+
+        IEnumerator _BlockRoad(Road r, Roundabout rab){
+            yield return new WaitForSeconds(0.25f);
+            r.SetActiveRoundabout(rab);
         }
     }
     void OnCollisionEnter(Collision c){
