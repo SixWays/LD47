@@ -12,6 +12,7 @@ public class Music : MonoBehaviour {
     IEnumerator Start(){
         if (_i){
             Destroy(gameObject);
+            yield break;
         } else {
             _i = this;
             transform.SetParent(null);
@@ -27,6 +28,7 @@ public class Music : MonoBehaviour {
             yield return null;
         }
         _loop.loop = false;
+        _main.Stop();
         _loop.Play();
         float wait = _loop.clip.length;
         float t = 0;
