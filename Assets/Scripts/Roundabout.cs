@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
 
-public class Roundabout : MonoBehaviour {
+public class Roundabout : RoadBase {
     static List<Roundabout> _all = new List<Roundabout>();
     public static ReadOnlyCollection<Roundabout> All => _all.AsReadOnly();
     public static Roundabout Active {get; private set;}
@@ -11,6 +11,8 @@ public class Roundabout : MonoBehaviour {
     [SerializeField] float _radiusInner;
     [SerializeField] float _radiusOuter;
     [SerializeField] BoxCollider[] _boundaries;
+    [SerializeField] Ai[] _aiPrefabs;
+    [SerializeField] Vector2Int _minMaxAiSpawns;
 
     public float RadiusInner => _radiusInner;
     public float RadiusOuter => _radiusOuter;
@@ -26,8 +28,9 @@ public class Roundabout : MonoBehaviour {
         }
         _all.Add(this);
     }
-    void OnDestroy(){
+    protected override void OnDestroy(){
         _all.Remove(this);
+        base.OnDestroy();
     }
 
     public void AddToRoad(Road r){
@@ -40,6 +43,15 @@ public class Roundabout : MonoBehaviour {
         transform.position = pos;
         DisableBoundary(-r.transform.forward, false);
         _roads.Add(r);
+
+        // Spawn AIs
+        int spawns = Random.Range(_minMaxAiSpawns.x, _minMaxAiSpawns.y);
+        for (int i=0; i<spawns; ++i){
+            var ai = Instantiate<Ai>(_aiPrefabs[Random.Range(0, _aiPrefabs.Length)]);
+            float theta = Random.Range(0,Mathf.PI*2);
+            ai.transform.position = Polar.FromPolar(theta, RadiusOuter, transform.position);
+            ai.transform.forward = Polar.PolarForward(theta, RadiusOuter);
+        }
     }
     public void AddRoad(Road r, float angleDeg){
         DisableBoundary(r.transform.forward, true);

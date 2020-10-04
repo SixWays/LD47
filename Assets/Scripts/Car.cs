@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class Car : MonoBehaviour {
-    public float Speed;
+    protected abstract float speed {get;}
+    public float Speed => speed * HighwayManagement.SpeedScale;
     [SerializeField] protected float _entryOffsetRadians = 0.1f;
 
     protected Coroutine _transfer {get; private set;}
@@ -119,9 +120,11 @@ public abstract class Car : MonoBehaviour {
                     _currentRoad=null;
                     _theta = _theta + _entryOffsetRadians;
                 });
+                OnEnteredRoundabout(r);
             }
         }
     }
+    protected virtual void OnEnteredRoundabout(Roundabout r){}
 
     public static bool LineIntersection( Vector2 p1,Vector2 p2, Vector2 p3, Vector2 p4, ref Vector2 intersection )
     {

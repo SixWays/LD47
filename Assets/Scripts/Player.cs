@@ -3,17 +3,35 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : Car {
-    enum PlayerState {
+    public enum PlayerState {
         Travelling,
         Turning,
         Transferring,
         Dying
     }
     PlayerState _state = PlayerState.Travelling;
+    public PlayerState State => _state;
 
+    public static Player Instance {get; private set;}
+
+    [SerializeField] float _speed;
+    protected override float speed => _speed;
     [SerializeField] float _turnRadius;
 
     protected override float CurrentRadius => _currentRoundabout.RadiusInner;
+
+    void Start(){
+        if (Instance){
+            Destroy(gameObject);
+        } else {
+            Instance = this;
+        }
+    }
+    void OnDestroy(){
+        if (Instance == this){
+            Instance = null;
+        }
+    }
 
     void Update(){
         switch (_state){
@@ -67,11 +85,11 @@ public class Player : Car {
 
         IEnumerator _BlockRoad(Road r, Roundabout rab){
             yield return new WaitForSeconds(0.25f);
-            r.SetActiveRoundabout(rab);
+            r.SetActiveRoundabout(rab, true);
         }
     }
     void OnCollisionEnter(Collision c){
-        if (_state != PlayerState.Dying && _state != PlayerState.Transferring && !c.collider.CompareTag("Floor")){
+        if (!_currentRoad && _state != PlayerState.Dying && _state != PlayerState.Transferring && !c.collider.CompareTag("Floor")){
             Debug.LogFormat(c.collider, "DIE: {0}", c.collider.name);
             var rb = GetComponent<Rigidbody>();
             rb.constraints = RigidbodyConstraints.None;

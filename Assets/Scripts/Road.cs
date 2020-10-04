@@ -16,7 +16,7 @@ public static class Polar {
         return Mathf.Atan2(r.z, r.x);
     }
 }
-public class Road : MonoBehaviour {
+public class Road : RoadBase {
     static List<Road> _all = new List<Road>();
     public static ReadOnlyCollection<Road> All => _all.AsReadOnly();
     public static Road Active {get; private set;}
@@ -31,6 +31,9 @@ public class Road : MonoBehaviour {
 
     [SerializeField] GameObject _block1;
     [SerializeField] GameObject _block2;
+
+    [SerializeField] Despawner _despawn1;
+    [SerializeField] Despawner _despawn2;
 
     [SerializeField] Ai[] _aiPrefabs;
 
@@ -56,8 +59,9 @@ public class Road : MonoBehaviour {
         _all.Add(this);
         SetNextSpawnTime();
     }
-    void OnDestroy(){
+    protected override void OnDestroy(){
         _all.Remove(this);
+        base.OnDestroy();
     }
     void Update(){
         if (Time.time > _timeNextSpawn){
@@ -82,24 +86,33 @@ public class Road : MonoBehaviour {
     public void RoundaboutAdded(Roundabout r){
         _r2 = r;
     }
-    public void SetActiveRoundabout(Roundabout r){
+    public void SetActiveRoundabout(Roundabout r, bool block){
         if (r == _r1){
             _activeSpawnPoint = _entry2;
-            _block1.SetActive(true);
+            if (block){
+                _block1.SetActive(true);
+            }
         } else if (r == _r2){
             _activeSpawnPoint = _entry1;
-            _block2.SetActive(true);
+            if (block){
+                _block2.SetActive(true);
+            }
         }
     }
     public void PlayerEnteredRoad(){
         if (Active != this){
             Active = this;
             HighwayManagement.SpawnRoundabout();
+            _activeSpawnPoint = null;
+            Debug.LogFormat(_despawn2, "Deactivate exit despawner {0}", name);
+            _despawn2.gameObject.SetActive(false);
         }
     }
     public void PlayerExitedRoad(){
         if (Active == this){
             Active = null;
+            Debug.LogFormat(_despawn1, "Activate entry despawner {0}", name);
+            _despawn1.gameObject.SetActive(true);
         }
     }
 
