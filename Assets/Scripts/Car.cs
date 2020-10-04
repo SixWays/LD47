@@ -47,7 +47,6 @@ public abstract class Car : MonoBehaviour {
             float radius = Vector3.Distance(startPoint, centre);
 
             float dTheta = Vector3.SignedAngle(startFwd, endFwd, -Vector3.up) * Mathf.Deg2Rad;
-            Debug.Log($"dTheta: {dTheta} radius: {radius}");
             float arcLength = Mathf.Abs(dTheta * radius);
             float startTheta = Mathf.Repeat(Polar.ToPolar(transform.position, centre), Mathf.PI*2);
             float endTheta = startTheta + dTheta;

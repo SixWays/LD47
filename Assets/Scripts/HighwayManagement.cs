@@ -9,6 +9,7 @@ public class HighwayManagement : MonoBehaviour {
     [SerializeField] Road[] _roads;
     [SerializeField] int _minSpaceBetweenRoads;
     [SerializeField, Range(0f,1f)] float _roadChance;
+    [SerializeField] float _camMoveTime;
 
     void Awake(){
         if (_i){
@@ -52,10 +53,7 @@ public class HighwayManagement : MonoBehaviour {
             }
         }
 
-        var camPos = Camera.main.transform.position;
-        camPos.x = clone.transform.position.x;
-        camPos.z = clone.transform.position.z;
-        Camera.main.transform.position = camPos;
+        _i.StartCoroutine(_MoveCamera());
 
         int _Wrap(int i){
             int max = clone.HardpointCount;
@@ -66,6 +64,24 @@ public class HighwayManagement : MonoBehaviour {
                 i += max;
             }
             return i;
+        }
+
+        IEnumerator _MoveCamera(){
+            var cam = Camera.main.transform;
+            var camStart = cam.position;
+            var camEnd = camStart;
+            camEnd.x = clone.transform.position.x;
+            camEnd.z = clone.transform.position.z;
+
+            float t = 0;
+            Vector3 slew = Vector3.zero;
+            while (Vector3.Distance(cam.position, camEnd) > 0.01f){
+                cam.position = Vector3.SmoothDamp(cam.position, camEnd, ref slew, _i._camMoveTime);
+                t += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            cam.position = camEnd;
         }
     }
 }
