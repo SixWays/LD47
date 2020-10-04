@@ -73,6 +73,7 @@ public class HighwayManagement : MonoBehaviour {
         }
 
         var clone = Instantiate<Roundabout>(prefab);
+        clone.gameObject.SetActive(true);
         clone.AddToRoad(Road.Active);
         Road.Active.RoundaboutAdded(clone);
 
@@ -132,6 +133,9 @@ public class HighwayManagement : MonoBehaviour {
             var camEnd = camStart;
             camEnd.x = clone.transform.position.x;
             camEnd.z = clone.transform.position.z;
+            if (clone.OffsetCamera){
+                camEnd.x += 10f;
+            }
 
             float t = 0;
             Vector3 slew = Vector3.zero;

@@ -14,7 +14,7 @@ public class Player : Car {
         Boundary,
         WrongWay,
         Fuel,
-        Madness
+        Sanity
     }
     PlayerState _state = PlayerState.Travelling;
     public PlayerState State => _state;
@@ -76,6 +76,10 @@ public class Player : Car {
                     }
                     if (HighwayManagement.UseSanity){
                         Sanity -= HighwayManagement.SanityScale * (Time.deltaTime / _sanityTime);
+                        if (Sanity <= 0){
+                            Sanity = 0;
+                            Die(DeathType.Sanity);
+                        }
                     }
                 }
                 break;
@@ -106,6 +110,7 @@ public class Player : Car {
         enabled = false;
         Debug.LogFormat(this, "Death: {0}", type);
         HighwayManagement.OnPlayerDie(type);
+        DeathsUi.OnDeath(type);
     }
     protected override void OnTriggerEnter(Collider c){
         var p = c.GetComponent<PickupBase>();

@@ -13,9 +13,11 @@ public class Roundabout : RoadBase {
     [SerializeField] BoxCollider[] _boundaries;
     [SerializeField] Ai[] _aiPrefabs;
     [SerializeField] Vector2Int _minMaxAiSpawns;
+    [SerializeField] bool _offsetCamera = false;
 
     public float RadiusInner => _radiusInner;
     public float RadiusOuter => _radiusOuter;
+    public bool OffsetCamera => _offsetCamera;
 
     List<Road> _roads = new List<Road>();
     public ReadOnlyCollection<Road> Roads => _roads.AsReadOnly();
