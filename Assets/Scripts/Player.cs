@@ -15,10 +15,21 @@ public class Player : Car {
     public static Player Instance {get; private set;}
 
     [SerializeField] float _speed;
-    protected override float speed => _speed;
+    [SerializeField] float _roadSpeed;
+    protected override float speed {
+        get {
+            if (_currentRoad && !_currentRoundabout){
+                return _speed * _roadSpeed;
+            }
+            return _speed;
+        }
+    }
     [SerializeField] float _turnRadius;
+    [SerializeField] float _invulnTime=0.5f;
 
     protected override float CurrentRadius => _currentRoundabout.RadiusInner;
+
+    float _timeVulnerable;
 
     void Start(){
         if (Instance){
@@ -78,6 +89,7 @@ public class Player : Car {
             if (_currentRoundabout && _currentRoad && Road.Active == _currentRoad){
                 _currentRoad.PlayerExitedRoad();
                 _currentRoundabout.Activate();
+                _timeVulnerable = Time.time + _invulnTime;
                 StartCoroutine(_BlockRoad(_currentRoad, _currentRoundabout));
                 _currentRoad = null;
             }
@@ -89,7 +101,7 @@ public class Player : Car {
         }
     }
     void OnCollisionEnter(Collision c){
-        if (!_currentRoad && _state != PlayerState.Dying && _state != PlayerState.Transferring && !c.collider.CompareTag("Floor")){
+        if (Time.time > _timeVulnerable && !_currentRoad && _state != PlayerState.Dying && _state != PlayerState.Transferring && !c.collider.CompareTag("Floor")){
             Debug.LogFormat(c.collider, "DIE: {0}", c.collider.name);
             var rb = GetComponent<Rigidbody>();
             rb.constraints = RigidbodyConstraints.None;

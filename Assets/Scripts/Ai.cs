@@ -32,7 +32,6 @@ public class Ai : Car {
             // Despawner
             var d = c.GetComponent<Despawner>();
             if (d){
-                Debug.LogFormat(d, "Despawn {0}", name);
                 Destroy(gameObject);
             }
         }

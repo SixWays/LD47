@@ -104,14 +104,12 @@ public class Road : RoadBase {
             Active = this;
             HighwayManagement.SpawnRoundabout();
             _activeSpawnPoint = null;
-            Debug.LogFormat(_despawn2, "Deactivate exit despawner {0}", name);
             _despawn2.gameObject.SetActive(false);
         }
     }
     public void PlayerExitedRoad(){
         if (Active == this){
             Active = null;
-            Debug.LogFormat(_despawn1, "Activate entry despawner {0}", name);
             _despawn1.gameObject.SetActive(true);
         }
     }
