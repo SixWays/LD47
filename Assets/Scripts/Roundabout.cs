@@ -30,11 +30,11 @@ public class Roundabout : MonoBehaviour {
     }
 
     public void AddToRoad(Road r){
-        float angle = r.transform.eulerAngles.y - 90;
+        float angle = 90-r.transform.eulerAngles.y;
         angle = Mathf.Repeat(angle, 360);
         Vector3 joinPoint = r.Joint2;
         Vector3 offset = Polar.FromPolar(Mathf.Deg2Rad * angle, RadiusOuter, Vector3.zero);
-        Vector3 pos = joinPoint - offset;
+        Vector3 pos = joinPoint + offset;
         pos.y = 0;
         transform.position = pos;
         DisableBoundary(-r.transform.forward, false);
