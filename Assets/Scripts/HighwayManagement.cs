@@ -8,6 +8,7 @@ public class HighwayManagement : MonoBehaviour {
 
     public static float SpeedScale => _i._speedScale;
     public static float SanityScale => _i._sanityScale;
+    public static int SpawnIncrement => _i._spawnIncrement;
     public static int Score => _i._score;
     public static int Lives => _i._lives;
     public static bool UseFuel => _i._activeFuel;
@@ -25,6 +26,7 @@ public class HighwayManagement : MonoBehaviour {
     [SerializeField] Player _playerPrefab;
     [SerializeField] float _respawnTime=2;
     [SerializeField] float _uiAppearTime = 1;
+    [SerializeField] float _spawnFactor = 1.2f;
 
     int _roundaboutIndex = 0;
     int _score = 0;
@@ -35,6 +37,8 @@ public class HighwayManagement : MonoBehaviour {
 
     float _speedScale = 1;
     float _sanityScale = 1;
+    float _spawnScale = 0;
+    int _spawnIncrement;
 
     void Awake(){
         if (_i){
@@ -53,6 +57,8 @@ public class HighwayManagement : MonoBehaviour {
     public static void SpawnRoundabout(){
         ++_i._score;
         _i._speedScale += _i._speedFactor;
+        _i._spawnScale += _i._spawnFactor;
+        _i._spawnIncrement = Mathf.CeilToInt(_i._spawnScale);
 
         if (UseSanity){
             _i._sanityScale += _i._sanityFactor;

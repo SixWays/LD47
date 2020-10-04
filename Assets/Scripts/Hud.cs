@@ -9,6 +9,8 @@ public class Hud : MonoBehaviour {
     [SerializeField] GameObject _sanity;
     [SerializeField] GameObject _lives;
     [SerializeField] TextMeshProUGUI _livesText;
+    [SerializeField] GameObject _score;
+    [SerializeField] TextMeshProUGUI _scoreText;
 
     [SerializeField] float _flashTime;
     [SerializeField] float _flashRate;
@@ -30,6 +32,8 @@ public class Hud : MonoBehaviour {
         _fuel.SetActive(_wasFuelActive);
         _lives.SetActive(_wasLivesActive);
         _sanity.SetActive(_wasSanityActive);
+
+        _scoreText.text = HighwayManagement.Score.ToString();
     }
     void Update() {
         if (Player.Instance.Fuel != _lastFuel){

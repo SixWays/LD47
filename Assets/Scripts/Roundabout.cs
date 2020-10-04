@@ -45,7 +45,7 @@ public class Roundabout : RoadBase {
         _roads.Add(r);
 
         // Spawn AIs
-        int spawns = Random.Range(_minMaxAiSpawns.x, _minMaxAiSpawns.y);
+        int spawns = Random.Range(_minMaxAiSpawns.x, _minMaxAiSpawns.y) + HighwayManagement.SpawnIncrement;
         for (int i=0; i<spawns; ++i){
             var ai = Instantiate<Ai>(_aiPrefabs[Random.Range(0, _aiPrefabs.Length)]);
             float theta = Random.Range(0,Mathf.PI*2);
