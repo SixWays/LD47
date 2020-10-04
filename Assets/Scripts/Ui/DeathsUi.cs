@@ -26,10 +26,8 @@ public class DeathsUi : MonoBehaviour {
     static void DoDeath(UiFade[] deaths, UiFade death, bool random){
         if (random){
             DoDeath(deaths[Random.Range(0, deaths.Length)], true);
-            _i._deathSound.Play();
         } else {
             DoDeath(death, false);
-            _i._quickDeathSound.Play();
         }
     }
     static void DoDeath(UiFade death, bool overlay){
@@ -59,9 +57,6 @@ public class DeathsUi : MonoBehaviour {
     [SerializeField] UiFade _quickDeathWrongWay;
     [SerializeField] UiFade _quickDeathFuel;
     [SerializeField] UiFade _quickDeathSanity;
-
-    [SerializeField] AudioSource _quickDeathSound;
-    [SerializeField] AudioSource _deathSound;
 
     void Awake(){
         if (_i){

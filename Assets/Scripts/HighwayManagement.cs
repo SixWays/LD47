@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 public class HighwayManagement : MonoBehaviour {
@@ -31,6 +32,9 @@ public class HighwayManagement : MonoBehaviour {
     [SerializeField] int _startingLives = 0;
     [SerializeField] Gradient _cameraColorGradient;
     [SerializeField] float _cameraColorTime;
+
+    [SerializeField] UnityEvent _onCrash;
+    [SerializeField] UnityEvent _onDie;
 
     int _roundaboutIndex = 0;
     int _score = 0;
@@ -173,6 +177,7 @@ public class HighwayManagement : MonoBehaviour {
         }
 
         if (_i._dead){
+            _i._onDie.Invoke();
             if (!Roundabout.Active.OffsetCamera){
                 var camEnd = Camera.main.transform.position + Vector3.right * 10;
                 _i.StartCoroutine(MoveCamera(_i._camDeathTime, camEnd, ()=>{
@@ -182,6 +187,7 @@ public class HighwayManagement : MonoBehaviour {
                 DeathsUi.OnDeath(type, true);
             }
         } else {
+            _i._onCrash.Invoke();
             DeathsUi.OnDeath(type, false);
         }
 

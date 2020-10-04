@@ -12,7 +12,6 @@ public class Hud : MonoBehaviour {
     [SerializeField] GameObject _score;
     [SerializeField] TextMeshProUGUI _scoreText;
 
-    [SerializeField] AudioSource _scoreIncreaseSound;
     [SerializeField] AudioSource _livesIncreaseSound;
 
     [SerializeField] float _flashTime;
@@ -50,7 +49,6 @@ public class Hud : MonoBehaviour {
         if (wait){
             yield return new WaitForSeconds(1f);
             _scoreText.text = (score+1).ToString();
-            _scoreIncreaseSound.Play();
         }
     }
     void Update() {
@@ -79,9 +77,11 @@ public class Hud : MonoBehaviour {
         }
 
         if (HighwayManagement.Lives != _lastLives){
+            if (HighwayManagement.Lives > _lastLives){
+                _livesIncreaseSound.Play();
+            }
             _lastLives = HighwayManagement.Lives;
             _livesText.text = _lastLives.ToString();
-            _livesIncreaseSound.Play();
             StartCoroutine(_Flash(_lives));
         }
 

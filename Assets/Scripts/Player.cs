@@ -125,9 +125,11 @@ public class Player : Car {
                 _state = PlayerState.Transferring;
                 _currentRoadFwd = r.GetForward(c.transform.position);
                 Transfer(c.transform.position, _currentRoadFwd, ()=>{
-                    _state = PlayerState.Travelling;
-                    _currentRoad = r;
-                    r.PlayerEnteredRoad();
+                    if (_state != PlayerState.Dying){
+                        _state = PlayerState.Travelling;
+                        _currentRoad = r;
+                        r.PlayerEnteredRoad();
+                    }
                 });
             }
         } else if (_state != PlayerState.Dying) {
@@ -148,14 +150,20 @@ public class Player : Car {
         }
     }
     void OnCollisionEnter(Collision c){
-        if (Time.time > _timeVulnerable && !_currentRoad && _state != PlayerState.Dying && _state != PlayerState.Transferring && !c.collider.CompareTag("Floor")){
-            if (c.collider.GetComponentInParent<Ai>()){
-                Die(DeathType.Vehicle);
-            } else if (c.collider.CompareTag("Block")){
-                Die(DeathType.WrongWay);
-            } else {
-                Die(DeathType.Boundary);
-            }
+        if (c.collider.CompareTag("Floor")) return;
+        if (_state == PlayerState.Dying) return;
+        // Can only collide on outgoing transfer
+        if (_currentRoad) return;
+        if (_state == PlayerState.Transferring && _currentRoad) return;
+            
+        if (Time.time < _timeVulnerable) return;
+        
+        if (c.collider.GetComponentInParent<Ai>()){
+            Die(DeathType.Vehicle);
+        } else if (c.collider.CompareTag("Block")){
+            Die(DeathType.WrongWay);
+        } else {
+            Die(DeathType.Boundary);
         }
     }
 
