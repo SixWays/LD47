@@ -53,7 +53,7 @@ public class Road : RoadBase {
     Transform _activeSpawnPoint = null;
     float _timeNextSpawn;
 
-    void Awake(){
+    void Start(){
         _block1.SetActive(false);
         _block2.SetActive(false);
         _all.Add(this);

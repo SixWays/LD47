@@ -29,6 +29,8 @@ public class HighwayManagement : MonoBehaviour {
     [SerializeField] float _uiAppearTime = 1;
     [SerializeField] float _spawnFactor = 0.2f;
     [SerializeField] int _startingLives = 0;
+    [SerializeField] Gradient _cameraColorGradient;
+    [SerializeField] float _cameraColorTime;
 
     int _roundaboutIndex = 0;
     int _score = 0;
@@ -42,6 +44,8 @@ public class HighwayManagement : MonoBehaviour {
     float _spawnScale = 0;
     int _spawnIncrement;
 
+    bool _firstRoundabout = true;
+
     void Awake(){
         if (_i){
             Destroy(gameObject);
@@ -54,10 +58,12 @@ public class HighwayManagement : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.Space) && Player.Instance.State == Player.PlayerState.Dying && _dead){
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
+        Camera.main.backgroundColor = _cameraColorGradient.Evaluate(Mathf.Clamp01(Time.time / _cameraColorTime));
     }
 
     [ContextMenu("Spawn")]
     public static void SpawnRoundabout(){
+        _i._firstRoundabout = false;
         ++_i._score;
         _i._speedScale += _i._speedFactor;
         _i._spawnScale += _i._spawnFactor;
@@ -155,11 +161,12 @@ public class HighwayManagement : MonoBehaviour {
     }
 
     public static void OnPlayerDie(Player.DeathType type){
-        --_i._lives;
-        if (_i._lives < 0){
-            _i._lives = 0;
+        if (_i._firstRoundabout){
+            _i.StartCoroutine(_Respawn());
+        } else if (_i._lives == 0){
             _i._dead = true;
         } else {
+            --_i._lives;
             _i.StartCoroutine(_Respawn());
         }
 
@@ -183,8 +190,8 @@ public class HighwayManagement : MonoBehaviour {
             yield return null;
             var player = Instantiate<Player>(_i._playerPrefab);
             Debug.Log("Spawn Player", player);
-            player.transform.position = Polar.FromPolar(0, Roundabout.Active.RadiusOuter, Roundabout.Active.transform.position);
-            player.transform.forward = Polar.PolarForward(0, Roundabout.Active.RadiusOuter);
+            player.transform.position = Polar.FromPolar(0, Roundabout.Active.RadiusInner, Roundabout.Active.transform.position);
+            player.transform.forward = Polar.PolarForward(0, Roundabout.Active.RadiusInner);
         }   
     }
     public static void AddLives(int lives){

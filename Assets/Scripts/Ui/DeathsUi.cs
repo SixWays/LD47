@@ -36,6 +36,9 @@ public class DeathsUi : MonoBehaviour {
         _i.StartCoroutine(_Fade());
         IEnumerator _Fade(){
             if (overlay){
+                if (Roundabout.Active){
+                    Roundabout.Active.FadeOutInstructions();
+                }
                 _i._wrapper.Fade();
                 yield return new WaitForSeconds(_i._messageDelay);
             }

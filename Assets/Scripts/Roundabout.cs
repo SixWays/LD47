@@ -15,6 +15,8 @@ public class Roundabout : RoadBase {
     [SerializeField] Vector2Int _minMaxAiSpawns;
     [SerializeField] bool _offsetCamera = false;
 
+    [SerializeField] UiFade _instructions;
+
     public float RadiusInner => _radiusInner;
     public float RadiusOuter => _radiusOuter;
     public bool OffsetCamera => _offsetCamera;
@@ -33,6 +35,12 @@ public class Roundabout : RoadBase {
     protected override void OnDestroy(){
         _all.Remove(this);
         base.OnDestroy();
+    }
+
+    public void FadeOutInstructions(){
+        if (_instructions){
+            _instructions.FadeOut(1);
+        }
     }
 
     public void AddToRoad(Road r){

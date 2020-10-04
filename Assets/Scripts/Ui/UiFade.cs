@@ -74,4 +74,20 @@ public class UiFade : MonoBehaviour {
             _fade = null;
         }
     }
+    public void FadeOut(float time){
+        if (_fade != null){
+            StopCoroutine(_fade);
+        }
+        _fade = StartCoroutine(_FadeOut());
+
+        IEnumerator _FadeOut(){
+            float a = _cg.alpha;
+            float t = 0;
+            while (t < time){
+                _cg.alpha = Mathf.Lerp(0, a, 1f-(t/time));
+                yield return null;
+            }
+            _cg.alpha = 0;
+        }
+    }
 }

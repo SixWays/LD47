@@ -31,6 +31,7 @@ public class Player : Car {
             if (_currentRoad && !_currentRoundabout){
                 return _speed * _roadSpeed;
             }
+            if (Time.time < _timeToGo) return 0;
             return _speed;
         }
     }
@@ -44,14 +45,19 @@ public class Player : Car {
     protected override float CurrentRadius => _currentRoundabout.RadiusInner;
 
     float _timeVulnerable;
+    float _timeToGo;
 
-    void Start(){
+    IEnumerator Start(){
         if (Instance){
             Destroy(gameObject);
         } else {
             Instance = this;
-            _timeVulnerable = Time.time + _invulnTime;
+            _timeVulnerable = _timeToGo = Time.time + _invulnTime;
         }
+        var c = GetComponentInChildren<Collider>();
+        c.enabled = false;
+        yield return new WaitForSeconds(_invulnTime*0.9f);
+        c.enabled = true;
     }
     void OnDestroy(){
         if (Instance == this){
