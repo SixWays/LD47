@@ -16,6 +16,7 @@ public class Roundabout : MonoBehaviour {
     public float RadiusOuter => _radiusOuter;
 
     List<Road> _roads = new List<Road>();
+    public ReadOnlyCollection<Road> Roads => _roads.AsReadOnly();
 
     public int HardpointCount => _boundaries.Length;
 
@@ -38,9 +39,11 @@ public class Roundabout : MonoBehaviour {
         pos.y = 0;
         transform.position = pos;
         DisableBoundary(-r.transform.forward, false);
+        _roads.Add(r);
     }
     public void AddRoad(Road r, float angleDeg){
         DisableBoundary(r.transform.forward, true);
+        _roads.Add(r);
     }
     void DisableBoundary(Vector3 fwd, bool gameObject){
         foreach (var b in _boundaries){
@@ -65,6 +68,16 @@ public class Roundabout : MonoBehaviour {
     public void Activate(){
         if (Active != this){
             Active = this;
+            foreach (var r in All){
+                if (r != this){
+                    Destroy(r.gameObject);
+                }
+            }
+            foreach (var r in Road.All){
+                if (!_roads.Contains(r)){
+                    Destroy(r.gameObject);
+                }
+            }
         }
     }
 

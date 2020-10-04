@@ -31,25 +31,27 @@ public class HighwayManagement : MonoBehaviour {
         Dictionary<int,Road> roads = new Dictionary<int,Road>();
         roads.Add(existingRoadIndex, Road.Active);
 
-        for (int i=0; i<clone.HardpointCount; ++i){
-            // Check space
-            bool hasSpace = true;
-            for (int j=0; j<=_i._minSpaceBetweenRoads; ++j){
-                int prevRoadIndex = _Wrap(i-j);
-                int nextRoadIndex = _Wrap(i+j);
-                if (roads.ContainsKey(prevRoadIndex) || roads.ContainsKey(nextRoadIndex)){
-                    hasSpace = false;
-                    break;
+        while (roads.Count == 1){   // brute force to ensure there's at least one available road
+            for (int i=0; i<clone.HardpointCount; ++i){
+                // Check space
+                bool hasSpace = true;
+                for (int j=0; j<=_i._minSpaceBetweenRoads; ++j){
+                    int prevRoadIndex = _Wrap(i-j);
+                    int nextRoadIndex = _Wrap(i+j);
+                    if (roads.ContainsKey(prevRoadIndex) || roads.ContainsKey(nextRoadIndex)){
+                        hasSpace = false;
+                        break;
+                    }
                 }
-            }
-            if (!hasSpace) continue;
+                if (!hasSpace) continue;
 
-            if (Random.Range(0f,1f) < _i._roadChance){
-                var r = Instantiate<Road>(_i._roads[Random.Range(0, _i._roads.Length)]);
-                float angle = i * 360/clone.HardpointCount;
-                r.AddToRoundabout(clone, angle);
-                clone.AddRoad(r, angle);
-                roads.Add(i, r);
+                if (Random.Range(0f,1f) < _i._roadChance){
+                    var r = Instantiate<Road>(_i._roads[Random.Range(0, _i._roads.Length)]);
+                    float angle = i * 360/clone.HardpointCount;
+                    r.AddToRoundabout(clone, angle);
+                    clone.AddRoad(r, angle);
+                    roads.Add(i, r);
+                } 
             }
         }
 
